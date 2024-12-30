@@ -9,6 +9,7 @@ import BulkRSSearch from '../src/components/BulkRSSearch';
 
 export default function Home() {
   const [activeTab, setActiveTab] = React.useState<'all' | 'WFD' | 'RS' | 'bulk' | 'wfdSearch' | 'rsSearch'>('all');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [refreshTrigger, setRefreshTrigger] = React.useState(false);
 
   const handleQuestionAdded = () => {
