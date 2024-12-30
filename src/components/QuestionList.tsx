@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, deleteQuestion, updateQuestion } from '../lib/firebase';
 import { Question } from '../types';
@@ -8,7 +8,7 @@ interface QuestionListProps {
   onRefresh?: () => void;
 }
 
-export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
+export default function QuestionList({ filter, onRefresh }: QuestionListProps): React.ReactElement {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,9 +17,9 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
   const [editQuestionNo, setEditQuestionNo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  let searchDebounceTimer: NodeJS.Timeout;
+  const searchDebounceTimer = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -49,17 +49,17 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchQuestions();
-  }, [filter, debouncedSearchTerm]);
+  }, [fetchQuestions]);
 
   useEffect(() => {
     if (onRefresh) {
       fetchQuestions();
     }
-  }, [onRefresh]);
+  }, [onRefresh, fetchQuestions]);
 
   const exportToCSV = () => {
     const headers = ['QuestionNo', 'Type', 'Content'];
@@ -114,10 +114,10 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
               setSearchTerm(value);
               
               // Clear any existing timer
-              if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+              if (searchDebounceTimer.current) clearTimeout(searchDebounceTimer.current);
               
               // Set a new timer
-              searchDebounceTimer = setTimeout(() => {
+              searchDebounceTimer.current = setTimeout(() => {
                 setDebouncedSearchTerm(value);
               }, 1000); // 1 second delay
             }}
