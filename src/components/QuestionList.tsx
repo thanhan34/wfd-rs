@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, deleteQuestion, updateQuestion } from '../lib/firebase';
 import { Question } from '../types';
@@ -16,6 +16,8 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
   const [editContent, setEditContent] = useState('');
   const [editQuestionNo, setEditQuestionNo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  let searchDebounceTimer: NodeJS.Timeout;
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -33,8 +35,8 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
         : fetchedQuestions;
 
       // Apply search filter if search term exists
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
+      if (debouncedSearchTerm) {
+        const term = debouncedSearchTerm.toLowerCase();
         filteredQuestions = filteredQuestions.filter(q => 
           q.content.toLowerCase().includes(term) || 
           q.questionNo.toLowerCase().includes(term)
@@ -51,7 +53,7 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
 
   useEffect(() => {
     fetchQuestions();
-  }, [filter, searchTerm]);
+  }, [filter, debouncedSearchTerm]);
 
   useEffect(() => {
     if (onRefresh) {
@@ -107,7 +109,18 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps) {
             type="text"
             placeholder="Search questions..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchTerm(value);
+              
+              // Clear any existing timer
+              if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+              
+              // Set a new timer
+              searchDebounceTimer = setTimeout(() => {
+                setDebouncedSearchTerm(value);
+              }, 1000); // 1 second delay
+            }}
             className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

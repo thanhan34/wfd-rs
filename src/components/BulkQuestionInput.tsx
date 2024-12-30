@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Question } from '../types';
 
 export default function BulkQuestionInput() {
   const [numbers, setNumbers] = useState<string>('');
+  const [debouncedNumbers, setDebouncedNumbers] = useState<string>('');
+  let debounceTimer: NodeJS.Timeout;
   const [results, setResults] = useState<{
     existing: Question[];
     missing: string[];
@@ -34,8 +36,8 @@ export default function BulkQuestionInput() {
       const missingNumbers: string[] = [];
 
       // Process numbers
-      const wfdNumbers = [];
-      const rsNumbers = [];
+      const wfdNumbers: string[] = [];
+      const rsNumbers: string[] = [];
       
       for (const num of numberList) {
         if (num.startsWith('WFD')) {
@@ -165,13 +167,24 @@ export default function BulkQuestionInput() {
           <input
             type="text"
             value={numbers}
-            onChange={(e) => setNumbers(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setNumbers(value);
+              
+              // Clear any existing timer
+              if (debounceTimer) clearTimeout(debounceTimer);
+              
+              // Set a new timer
+              debounceTimer = setTimeout(() => {
+                setDebouncedNumbers(value);
+              }, 1000); // 1 second delay
+            }}
             placeholder="WFD001, RS001, WFD002"
             className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
           <button
             onClick={handleSearch}
-            disabled={loading || !numbers}
+            disabled={loading || !debouncedNumbers}
             className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
           >
             {loading ? 'Searching...' : 'Search'}
