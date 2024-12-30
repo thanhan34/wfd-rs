@@ -1,7 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Question } from '../types';
+
+interface FirestoreData {
+  WFDNo?: string;
+  RSNo?: string;
+  type: string;
+  content: string;
+}
 
 export default function BulkQuestionInput() {
   const [numbers, setNumbers] = useState<string>('');
@@ -61,11 +68,11 @@ export default function BulkQuestionInput() {
           where('type', '==', 'WFD')
         );
         const wfdSnapshot = await getDocs(wfdQuery);
-        const foundWFDs = new Set();
+        const foundWFDs = new Set<string>();
         
         wfdSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const storedWFDNo = data.WFDNo || '';
+          const data = doc.data() as FirestoreData;
+          const storedWFDNo = data.WFDNo ?? '';
           const searchWFDNo = storedWFDNo.startsWith('WFD') ? storedWFDNo : `WFD${storedWFDNo}`;
           
           // Check if this document matches any of our search numbers
@@ -98,12 +105,13 @@ export default function BulkQuestionInput() {
           where('RSNo', 'in', rsNumbers)
         );
         const rsSnapshot = await getDocs(rsQuery);
-        const foundRSs = new Set(rsSnapshot.docs.map(doc => doc.data().RSNo));
+        const foundRSs = new Set<string>(rsSnapshot.docs.map(doc => (doc.data() as FirestoreData).RSNo ?? ''));
 
         rsSnapshot.docs.forEach(doc => {
+          const data = doc.data() as FirestoreData;
           existingQuestions.push({
             id: doc.id,
-            ...doc.data()
+            ...data
           } as Question);
         });
 
@@ -208,7 +216,7 @@ export default function BulkQuestionInput() {
                 const csvContent = [
                   headers.join(','),
                   ...results.existing.map(q => [
-                    q.type === 'WFD' ? (q as any).WFDNo : (q as any).RSNo,
+                    q.type === 'WFD' ? (q as FirestoreData).WFDNo : (q as FirestoreData).RSNo,
                     q.type,
                     `"${q.content.replace(/"/g, '""')}"` // Escape quotes in content
                   ].join(','))
@@ -233,7 +241,7 @@ export default function BulkQuestionInput() {
               <div key={question.id} className="p-3 bg-gray-50 rounded-md">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-medium">
-                    {question.type === 'WFD' ? (question as any).WFDNo : (question as any).RSNo}
+                    {question.type === 'WFD' ? (question as FirestoreData).WFDNo : (question as FirestoreData).RSNo}
                   </span>
                   <span className="text-sm text-gray-500">{question.type}</span>
                 </div>

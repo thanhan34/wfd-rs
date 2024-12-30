@@ -1,7 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Question } from '../types';
+
+interface FirestoreData {
+  questionNo?: string;
+  type: string;
+  content: string;
+}
 
 export default function BulkRSSearch() {
   const [numbers, setNumbers] = useState<string>('');
@@ -50,8 +56,8 @@ export default function BulkRSSearch() {
 
       // Process each document
       rsSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        const storedQuestionNo = data.questionNo || '';
+        const data = doc.data() as FirestoreData;
+        const storedQuestionNo = data.questionNo ?? '';
         
         // Check questionNo field since that's where the format is stored
         if (searchNumbers.includes(storedQuestionNo)) {
@@ -157,7 +163,7 @@ export default function BulkRSSearch() {
                 const csvContent = [
                   headers.join(','),
                   ...results.existing.map(q => [
-                    (q as any).questionNo,
+                    (q as FirestoreData).questionNo,
                     `"${q.content.replace(/"/g, '""')}"` // Escape quotes in content
                   ].join(','))
                 ].join('\n');
@@ -182,7 +188,7 @@ export default function BulkRSSearch() {
             {results.existing.map((question) => (
               <div key={question.id} className="p-3 bg-gray-50 rounded-md">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium">{(question as any).questionNo}</span>
+                  <span className="font-medium">{(question as FirestoreData).questionNo}</span>
                 </div>
                 <p className="text-gray-700">{question.content}</p>
               </div>
