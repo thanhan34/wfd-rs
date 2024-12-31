@@ -43,7 +43,15 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps): 
         );
       }
 
-      setQuestions(filteredQuestions);
+      // Sort questions by questionNo
+      const sortedQuestions = filteredQuestions.sort((a, b) => {
+        // Convert questionNo strings to numbers for proper numerical sorting
+        const aNum = parseInt(a.questionNo.replace(/\D/g, ''));
+        const bNum = parseInt(b.questionNo.replace(/\D/g, ''));
+        return aNum - bNum;
+      });
+      
+      setQuestions(sortedQuestions);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
