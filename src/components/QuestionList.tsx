@@ -103,7 +103,7 @@ export default function QuestionList({ filter, onRefresh }: QuestionListProps): 
       <div className="p-4 space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">
-            {filter ? `${filter} Questions` : 'All Questions'}
+            {filter ? `${filter} Questions (${questions.length})` : `All Questions (${questions.length})`}
           </h2>
           <button
             onClick={exportToCSV}
