@@ -18,7 +18,7 @@ export default function TextToJsonConverter({ onJsonGenerated }: TextToJsonConve
         const match = line.match(/^((#\d+\s*(WFD|RS))|(RA\d{3}))\s*(.+)$/);
         if (!match) return null;
 
-        const [, fullMatch, wfdrsNo, wfdrsType, raNo, content] = match;
+        const [, wfdrsNo, wfdrsType, raNo, content] = match;
         const questionNo = raNo || wfdrsNo.trim();
         const type = raNo ? 'RA' : wfdrsType.trim();
         return {
