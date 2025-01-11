@@ -6,9 +6,12 @@ import QuestionList from '../src/components/QuestionList';
 import BulkImport from '../src/components/BulkImport';
 import BulkWFDSearch from '../src/components/BulkWFDSearch';
 import BulkRSSearch from '../src/components/BulkRSSearch';
+import BulkRASearch from '../src/components/BulkRASearch';
+import RAQuestionInput from '../src/components/RAQuestionInput';
+import RAQuestionList from '../src/components/RAQuestionList';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = React.useState<'all' | 'WFD' | 'RS' | 'bulk' | 'wfdSearch' | 'rsSearch'>('all');
+  const [activeTab, setActiveTab] = React.useState<'all' | 'WFD' | 'RS' | 'RA' | 'bulk' | 'wfdSearch' | 'rsSearch' | 'raSearch'>('all');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [refreshTrigger, setRefreshTrigger] = React.useState(false);
 
@@ -25,20 +28,21 @@ export default function Home() {
 
         {/* Tabs */}
         <div className="flex space-x-4 mb-6">
-        {(['all', 'WFD', 'RS', 'bulk', 'wfdSearch', 'rsSearch'] as const).map((tab) => (
+        {(['all', 'WFD', 'RS', 'RA', 'bulk', 'wfdSearch', 'rsSearch', 'raSearch'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg font-medium ${
                 activeTab === tab
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#fc5d01] text-white'
+                  : 'bg-white text-gray-600 hover:bg-[#fedac2]'
               }`}
             >
               {tab === 'all' ? 'All Questions' : 
                tab === 'bulk' ? 'Bulk Import' : 
                tab === 'wfdSearch' ? 'WFD Search' :
                tab === 'rsSearch' ? 'RS Search' :
+               tab === 'raSearch' ? 'RA Search' :
                `${tab} Questions`}
             </button>
           ))}
@@ -52,6 +56,15 @@ export default function Home() {
             <BulkWFDSearch />
           ) : activeTab === 'rsSearch' ? (
             <BulkRSSearch />
+          ) : activeTab === 'raSearch' ? (
+            <BulkRASearch />
+          ) : activeTab === 'RA' ? (
+            <>
+              <div className="mb-8">
+                <RAQuestionInput onQuestionAdded={handleQuestionAdded} />
+              </div>
+              <RAQuestionList onRefresh={() => setRefreshTrigger(prev => !prev)} />
+            </>
           ) : (
             <>
               {/* Question Input Section */}

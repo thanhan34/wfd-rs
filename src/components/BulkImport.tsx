@@ -34,9 +34,9 @@ export default function BulkImport({ onImportComplete }: BulkImportProps) {
           throw new Error(`Question at index ${index} is missing required fields`);
         }
         
-        // Validate question number format (#number WFD/RS)
-        if (!q.questionNo.match(/^#\d+\s*(WFD|RS)$/)) {
-          throw new Error(`Question at index ${index} has invalid format. Expected format: #number WFD or #number RS`);
+        // Validate question number format (#number WFD/RS or RA001)
+        if (!q.questionNo.match(/^(#\d+\s*(WFD|RS)|RA\d{3})$/)) {
+          throw new Error(`Question at index ${index} has invalid format. Expected format: #number WFD, #number RS, or RA001`);
         }
         // Type is already set by TextToJsonConverter
       });
@@ -98,8 +98,8 @@ export default function BulkImport({ onImportComplete }: BulkImportProps) {
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-semibold
-              file:bg-indigo-50 file:text-indigo-700
-              hover:file:bg-indigo-100"
+              file:bg-[#fedac2] file:text-[#fc5d01]
+              hover:file:bg-[#fdbc94]"
           />
         </div>
 
@@ -118,10 +118,14 @@ export default function BulkImport({ onImportComplete }: BulkImportProps) {
   {
     "questionNo": "#123 RS",
     "content": "Question content here"
+  },
+  {
+    "questionNo": "RA001",
+    "content": "Repeat after question content here"
   }
 ]`}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-              focus:border-indigo-500 focus:ring-indigo-500 h-48"
+              focus:border-[#fc5d01] focus:ring-[#fc5d01] h-48"
           />
         </div>
 
@@ -145,7 +149,7 @@ export default function BulkImport({ onImportComplete }: BulkImportProps) {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" 
+                className="bg-[#fc5d01] h-2.5 rounded-full transition-all duration-300" 
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -156,8 +160,8 @@ export default function BulkImport({ onImportComplete }: BulkImportProps) {
           onClick={handleImport}
           disabled={loading || !jsonInput.trim()}
           className="mt-4 inline-flex justify-center rounded-md border border-transparent 
-            bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm 
-            hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 
+            bg-[#fc5d01] py-2 px-4 text-sm font-medium text-white shadow-sm 
+            hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] 
             focus:ring-offset-2 disabled:opacity-50"
         >
           {loading ? `Importing... ${progress}%` : 'Import Questions'}

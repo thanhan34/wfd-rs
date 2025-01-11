@@ -1,6 +1,6 @@
 export interface Question {
   id: string;
-  type: 'WFD' | 'RS';
+  type: 'WFD' | 'RS' | 'RA';
   content: string;
   questionNo: string;
 }
@@ -13,4 +13,9 @@ export interface WFDQuestion extends Question {
 export interface RSQuestion extends Question {
   type: 'RS';
   RSNo: string;
+}
+
+export interface RAQuestion extends Question {
+  type: 'RA';
+  RANo: string;
 }
