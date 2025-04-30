@@ -72,8 +72,15 @@ export default function BulkRASearch() {
       const missingNumbers = searchNumbers
         .filter(searchNum => !foundNumbers.has(searchNum));
 
+      // Sort existing questions to match the order of search numbers
+      const sortedExistingQuestions = [...existingQuestions].sort((a, b) => {
+        const aIndex = searchNumbers.indexOf((a as FirestoreData).questionNo ?? '');
+        const bIndex = searchNumbers.indexOf((b as FirestoreData).questionNo ?? '');
+        return aIndex - bIndex;
+      });
+
       setResults({
-        existing: existingQuestions,
+        existing: sortedExistingQuestions,
         missing: missingNumbers
       });
     } catch (err) {
@@ -150,6 +157,73 @@ export default function BulkRASearch() {
         </div>
       )}
 
+      {/* Summary statistics */}
+      {(results.existing.length > 0 || results.missing.length > 0) && (
+        <div className="mb-4 p-3 bg-[#fedac2] rounded-md">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Summary</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Total Searched</p>
+              <p className="text-xl font-bold text-[#fc5d01]">{results.existing.length + results.missing.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Existing</p>
+              <p className="text-xl font-bold text-green-600">{results.existing.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Missing</p>
+              <p className="text-xl font-bold text-red-600">{results.missing.length}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Missing questions section - moved above existing questions */}
+      {results.missing.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Missing RA Questions</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select RA Number to Add
+              </label>
+              <select
+                value={selectedMissing}
+                onChange={(e) => setSelectedMissing(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
+              >
+                <option value="">Select a number</option>
+                {results.missing.map((num) => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedMissing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Content for {selectedMissing}
+                </label>
+                <textarea
+                  value={newContent}
+                  onChange={(e) => setNewContent(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
+                  rows={4}
+                />
+                <button
+                  onClick={handleAddMissing}
+                  disabled={loading || !newContent}
+                  className="mt-2 inline-flex justify-center rounded-md border border-transparent bg-[#fc5d01] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {loading ? 'Adding...' : 'Add Question'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Existing questions section */}
       {results.existing.length > 0 && (
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -193,49 +267,6 @@ export default function BulkRASearch() {
         </div>
       )}
 
-      {results.missing.length > 0 && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Missing RA Questions</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select RA Number to Add
-              </label>
-              <select
-                value={selectedMissing}
-                onChange={(e) => setSelectedMissing(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
-              >
-                <option value="">Select a number</option>
-                {results.missing.map((num) => (
-                  <option key={num} value={num}>{num}</option>
-                ))}
-              </select>
-            </div>
-
-            {selectedMissing && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Content for {selectedMissing}
-                </label>
-                <textarea
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
-                  rows={4}
-                />
-                <button
-                  onClick={handleAddMissing}
-                  disabled={loading || !newContent}
-                  className="mt-2 inline-flex justify-center rounded-md border border-transparent bg-[#fc5d01] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
-                >
-                  {loading ? 'Adding...' : 'Add Question'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
