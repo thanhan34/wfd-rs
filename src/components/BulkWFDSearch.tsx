@@ -12,6 +12,7 @@ interface FirestoreData {
 export default function BulkWFDSearch() {
   const [numbers, setNumbers] = useState<string>('');
   const [debouncedNumbers, setDebouncedNumbers] = useState<string>('');
+  const [bulkText, setBulkText] = useState<string>('');
   let debounceTimer: NodeJS.Timeout;
   const [results, setResults] = useState<{
     existing: Question[];
@@ -91,6 +92,44 @@ export default function BulkWFDSearch() {
     }
   };
 
+  const extractWfdIds = () => {
+    if (!bulkText.trim()) {
+      setError('Please enter text containing WFD numbers');
+      return;
+    }
+
+    try {
+      // Use regex to extract numbers after # and before WFD
+      const wfdIds = bulkText.match(/#(\d+)\s+WFD/g) || [];
+      
+      if (wfdIds.length === 0) {
+        setError('No WFD numbers found in the text');
+        return;
+      }
+      
+      // Join the IDs with commas
+      const formattedIds = wfdIds.map(id => {
+        // Extract just the number part
+        const numMatch = id.match(/#(\d+)/);
+        return numMatch ? numMatch[1] : '';
+      }).filter(Boolean).join(', ');
+      
+      // Set the numbers input
+      setNumbers(formattedIds);
+      
+      // Also update debounced numbers to enable search button
+      setDebouncedNumbers(formattedIds);
+      
+      // Clear the bulk text input
+      setBulkText('');
+      
+      // Clear any previous error
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while extracting WFD numbers');
+    }
+  };
+
   const handleAddMissing = async () => {
     if (!selectedMissing || !newContent) return;
 
@@ -121,36 +160,62 @@ export default function BulkWFDSearch() {
 
   return (
     <div className="space-y-6 p-4 bg-white rounded-lg shadow">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Enter Numbers (comma-separated)
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={numbers}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNumbers(value);
-              
-              // Clear any existing timer
-              if (debounceTimer) clearTimeout(debounceTimer);
-              
-              // Set a new timer
-              debounceTimer = setTimeout(() => {
-                setDebouncedNumbers(value);
-              }, 1000); // 1 second delay
-            }}
-            placeholder="418, 729, 1157"
-            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading || !debouncedNumbers}
-            className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? 'Searching...' : 'Search'}
-          </button>
+      <div className="space-y-4">
+        {/* Bulk Text Input Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Paste Text with WFD Numbers
+          </label>
+          <div className="space-y-2">
+            <textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder="#118 WFD&#10;#118Medium&#10;Undone&#10;#76 WFD&#10;#76Medium"
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              rows={5}
+            />
+            <button
+              onClick={extractWfdIds}
+              disabled={!bulkText.trim()}
+              className="inline-flex justify-center rounded-md border border-transparent bg-fc5d01 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#e55601] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
+            >
+              Extract WFD Numbers
+            </button>
+          </div>
+        </div>
+
+        {/* Comma-separated Numbers Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Enter Numbers (comma-separated)
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={numbers}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNumbers(value);
+                
+                // Clear any existing timer
+                if (debounceTimer) clearTimeout(debounceTimer);
+                
+                // Set a new timer
+                debounceTimer = setTimeout(() => {
+                  setDebouncedNumbers(value);
+                }, 1000); // 1 second delay
+              }}
+              placeholder="418, 729, 1157"
+              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading || !debouncedNumbers}
+              className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              {loading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
         </div>
       </div>
 

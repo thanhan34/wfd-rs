@@ -12,6 +12,7 @@ interface FirestoreData {
 export default function BulkRASearch() {
   const [numbers, setNumbers] = useState<string>('');
   const [debouncedNumbers, setDebouncedNumbers] = useState<string>('');
+  const [bulkText, setBulkText] = useState<string>('');
   let debounceTimer: NodeJS.Timeout;
   const [results, setResults] = useState<{
     existing: Question[];
@@ -90,6 +91,44 @@ export default function BulkRASearch() {
     }
   };
 
+  const extractRaIds = () => {
+    if (!bulkText.trim()) {
+      setError('Please enter text containing RA numbers');
+      return;
+    }
+
+    try {
+      // Use regex to extract numbers after # and before RA
+      const raIds = bulkText.match(/#(\d+)\s+RA/g) || [];
+      
+      if (raIds.length === 0) {
+        setError('No RA numbers found in the text');
+        return;
+      }
+      
+      // Join the IDs with commas
+      const formattedIds = raIds.map(id => {
+        // Extract just the number part
+        const numMatch = id.match(/#(\d+)/);
+        return numMatch ? numMatch[1] : '';
+      }).filter(Boolean).join(', ');
+      
+      // Set the numbers input
+      setNumbers(formattedIds);
+      
+      // Also update debounced numbers to enable search button
+      setDebouncedNumbers(formattedIds);
+      
+      // Clear the bulk text input
+      setBulkText('');
+      
+      // Clear any previous error
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while extracting RA numbers');
+    }
+  };
+
   const handleAddMissing = async () => {
     if (!selectedMissing || !newContent) return;
 
@@ -120,34 +159,60 @@ export default function BulkRASearch() {
 
   return (
     <div className="space-y-6 p-4 bg-white rounded-lg shadow">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Enter Numbers (comma-separated)
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={numbers}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNumbers(value);
-              
-              if (debounceTimer) clearTimeout(debounceTimer);
-              
-              debounceTimer = setTimeout(() => {
-                setDebouncedNumbers(value);
-              }, 1000);
-            }}
-            placeholder="1, 2, 3"
-            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading || !debouncedNumbers}
-            className="inline-flex justify-center rounded-md border border-transparent bg-[#fc5d01] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? 'Searching...' : 'Search'}
-          </button>
+      <div className="space-y-4">
+        {/* Bulk Text Input Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Paste Text with RA Numbers
+          </label>
+          <div className="space-y-2">
+            <textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder="#118 RA&#10;#118Medium&#10;Undone&#10;#76 RA&#10;#76Medium"
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
+              rows={5}
+            />
+            <button
+              onClick={extractRaIds}
+              disabled={!bulkText.trim()}
+              className="inline-flex justify-center rounded-md border border-transparent bg-[#fc5d01] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
+            >
+              Extract RA Numbers
+            </button>
+          </div>
+        </div>
+
+        {/* Comma-separated Numbers Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Enter Numbers (comma-separated)
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={numbers}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNumbers(value);
+                
+                if (debounceTimer) clearTimeout(debounceTimer);
+                
+                debounceTimer = setTimeout(() => {
+                  setDebouncedNumbers(value);
+                }, 1000);
+              }}
+              placeholder="1, 2, 3"
+              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-[#fc5d01] focus:ring-[#fc5d01]"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading || !debouncedNumbers}
+              className="inline-flex justify-center rounded-md border border-transparent bg-[#fc5d01] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#fd7f33] focus:outline-none focus:ring-2 focus:ring-[#fc5d01] focus:ring-offset-2 disabled:opacity-50"
+            >
+              {loading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
         </div>
       </div>
 
